@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe} from '@nestjs/common';
 import {TasksService} from './tasks.service';
 import {CreateTaskDto} from './dto/create-task.dto';
 import {GetTasksFilterDto} from './dto/get-tasks-filter.dto';
@@ -15,11 +15,13 @@ import {User} from '../auth/user.entity';
 @UseGuards(AuthGuard())
 export class TasksController {
 
+    private logger = new Logger('TasksController');
+
     constructor(private taskService: TasksService) {}
 
     @Get()
     getTasks(@Query(ValidationPipe) filterDto: GetTasksFilterDto, @GetUser() user: User): Promise<Task[]> {
-
+        this.logger.verbose(`User "${user.username}" retrieving all tasks. Filters: ${JSON.stringify(filterDto)}`);
         return this.taskService.getTasks(filterDto, user);
 
         // Good for in-memory storage
@@ -38,6 +40,7 @@ export class TasksController {
     @Post()
     @UsePipes(ValidationPipe)
     createTask(@Body() createTaskDto: CreateTaskDto, @GetUser() user: User) {
+        this.logger.verbose(`User "${user.username}" retrieving all tasks. Filters: ${JSON.stringify(createTaskDto)}`);
         return this.taskService.createTask(createTaskDto, user);
     }
 
