@@ -6,6 +6,7 @@ import {Task} from './task.entity';
 import {TaskStatus} from './task-status.enum';
 import {DeleteResult} from 'typeorm';
 import {GetTasksFilterDto} from './dto/get-tasks-filter.dto';
+import {User} from '../auth/user.entity';
 
 @Injectable()
 export class TasksService {
@@ -14,9 +15,9 @@ export class TasksService {
 
     }
 
-    getTasks(filterDto: GetTasksFilterDto): Promise<Task[]> {
+    getTasks(filterDto: GetTasksFilterDto, user: User): Promise<Task[]> {
         //
-        return this.taskRepository.getTasks(filterDto);
+        return this.taskRepository.getTasks(filterDto, user);
     }
 
     // private tasks: Task[] = [];
@@ -45,8 +46,8 @@ export class TasksService {
     // }
     //
 
-    async getTaskById(id: number): Promise<Task> {
-        const found = await this.taskRepository.getTaskById(id);
+    async getTaskById(id: number, user: User): Promise<Task> {
+        const found = await this.taskRepository.findOne({where: {id, userId: user.id}});
 
         if (!found) {
             //
@@ -56,8 +57,8 @@ export class TasksService {
         return found;
     }
 
-    async createTask(createTaskDto: CreateTaskDto) {
-        return this.taskRepository.createTask(createTaskDto);
+    async createTask(createTaskDto: CreateTaskDto, user: User) {
+        return this.taskRepository.createTask(createTaskDto, user);
     }
 
     //
@@ -75,7 +76,7 @@ export class TasksService {
     // //     return data;
     // // }
     //
-    async deleteTaskById(id: number): Promise<void> {
+    async deleteTaskById(id: number, user: User): Promise<void> {
         console.log('Delete', id);
 
         // const found = this.getTaskById(id);
@@ -85,7 +86,7 @@ export class TasksService {
         //     throw new NotFoundException(`Task with ${id} not found`);
         // }
 
-        const result = await this.taskRepository.deleteTask(id);
+        const result = await this.taskRepository.delete({id, userId: user.id});
 
         if (result.affected) {
             throw new NotFoundException(`Task with ID "${id} not found"`);
@@ -94,8 +95,8 @@ export class TasksService {
         // this.tasks.splice(this.tasks.findIndex((i) => i.id === id), 1);
     }
 
-    async updateTaskStatus(id: number, status: TaskStatus): Promise<Task> {
-        const task = await this.getTaskById(id);
+    async updateTaskStatus(id: number, status: TaskStatus, user: User): Promise<Task> {
+        const task = await this.getTaskById(id, user);
         task.status = status;
         await task.save();
         return task;
